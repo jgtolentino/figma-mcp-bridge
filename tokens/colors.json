@@ -1,0 +1,92 @@
+{
+  "colors": {
+    "primary": {
+      "value": "#1E40AF",
+      "type": "color",
+      "description": "Primary brand color"
+    },
+    "primaryLight": {
+      "value": "#3B82F6",
+      "type": "color",
+      "description": "Light variant of primary color"
+    },
+    "primaryDark": {
+      "value": "#1E3A8A",
+      "type": "color",
+      "description": "Dark variant of primary color"
+    },
+    "secondary": {
+      "value": "#7C3AED",
+      "type": "color",
+      "description": "Secondary brand color"
+    },
+    "secondaryLight": {
+      "value": "#A78BFA",
+      "type": "color",
+      "description": "Light variant of secondary color"
+    },
+    "secondaryDark": {
+      "value": "#6D28D9",
+      "type": "color",
+      "description": "Dark variant of secondary color"
+    },
+    "neutral100": {
+      "value": "#F3F4F6",
+      "type": "color",
+      "description": "Lightest neutral"
+    },
+    "neutral200": {
+      "value": "#E5E7EB",
+      "type": "color"
+    },
+    "neutral300": {
+      "value": "#D1D5DB",
+      "type": "color"
+    },
+    "neutral400": {
+      "value": "#9CA3AF",
+      "type": "color"
+    },
+    "neutral500": {
+      "value": "#6B7280",
+      "type": "color"
+    },
+    "neutral600": {
+      "value": "#4B5563",
+      "type": "color"
+    },
+    "neutral700": {
+      "value": "#374151",
+      "type": "color"
+    },
+    "neutral800": {
+      "value": "#1F2937",
+      "type": "color"
+    },
+    "neutral900": {
+      "value": "#111827",
+      "type": "color",
+      "description": "Darkest neutral"
+    },
+    "success": {
+      "value": "#10B981",
+      "type": "color",
+      "description": "Success state color"
+    },
+    "warning": {
+      "value": "#F59E0B",
+      "type": "color",
+      "description": "Warning state color"
+    },
+    "error": {
+      "value": "#EF4444",
+      "type": "color",
+      "description": "Error state color"
+    },
+    "info": {
+      "value": "#3B82F6",
+      "type": "color",
+      "description": "Info state color"
+    }
+  }
+}

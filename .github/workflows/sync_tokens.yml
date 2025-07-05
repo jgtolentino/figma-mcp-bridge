@@ -1,0 +1,180 @@
+name: Sync Design Tokens to Figma
+
+on:
+  push:
+    paths:
+      - "tokens/**"
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (preview changes only)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  sync-tokens:
+    runs-on: ubuntu-latest
+    name: Sync design tokens to Figma
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to detect changes
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('server/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          pip install -r server/requirements.txt
+          pip install typer rich python-dotenv httpx
+      
+      - name: Detect changed token files
+        id: changes
+        run: |
+          echo "Changed files:"
+          git diff --name-only HEAD^ HEAD | grep "^tokens/" || true
+          
+          # Check if any token files changed
+          if git diff --name-only HEAD^ HEAD | grep -q "^tokens/"; then
+            echo "TOKENS_CHANGED=true" >> $GITHUB_OUTPUT
+          else
+            echo "TOKENS_CHANGED=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Validate token files
+        if: steps.changes.outputs.TOKENS_CHANGED == 'true'
+        run: |
+          for file in tokens/*.json; do
+            if [ -f "$file" ]; then
+              echo "Validating $file..."
+              python cli/figma_ds_sync.py validate "$file"
+            fi
+          done
+      
+      - name: Merge all token files
+        if: steps.changes.outputs.TOKENS_CHANGED == 'true'
+        run: |
+          python -c "
+          import json
+          import glob
+          from pathlib import Path
+          
+          merged = {}
+          for file in glob.glob('tokens/*.json'):
+              with open(file, 'r') as f:
+                  data = json.load(f)
+                  for category, tokens in data.items():
+                      if category not in merged:
+                          merged[category] = {}
+                      merged[category].update(tokens)
+          
+          with open('tokens/merged.json', 'w') as f:
+              json.dump(merged, f, indent=2)
+          "
+      
+      - name: Sync tokens to Figma (Dry Run)
+        if: steps.changes.outputs.TOKENS_CHANGED == 'true' && (github.event.inputs.dry_run == 'true' || github.event_name == 'pull_request')
+        env:
+          FIGMA_PAT: ${{ secrets.FIGMA_PAT }}
+          FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
+        run: |
+          echo "Running in dry-run mode..."
+          python cli/figma_ds_sync.py push \
+            --input tokens/merged.json \
+            --dry-run
+      
+      - name: Sync tokens to Figma
+        if: steps.changes.outputs.TOKENS_CHANGED == 'true' && github.event.inputs.dry_run != 'true' && github.event_name != 'pull_request'
+        env:
+          FIGMA_PAT: ${{ secrets.FIGMA_PAT }}
+          FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
+        run: |
+          python cli/figma_ds_sync.py push \
+            --input tokens/merged.json
+      
+      - name: Create sync summary
+        if: always()
+        run: |
+          echo "## Figma Token Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.changes.outputs.TOKENS_CHANGED }}" == "true" ]; then
+            echo " Token files were changed and synced to Figma" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Changed files:" >> $GITHUB_STEP_SUMMARY
+            git diff --name-only HEAD^ HEAD | grep "^tokens/" | while read file; do
+              echo "- $file" >> $GITHUB_STEP_SUMMARY
+            done
+          else
+            echo "9 No token files were changed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "  This was a dry run - no changes were applied to Figma" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify-slack:
+    needs: sync-tokens
+    runs-on: ubuntu-latest
+    if: always() && vars.SLACK_WEBHOOK_URL != ''
+    
+    steps:
+      - name: Send Slack notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ "${{ needs.sync-tokens.result }}" == "success" ]; then
+            STATUS=" Success"
+            COLOR="good"
+          else
+            STATUS="L Failed"
+            COLOR="danger"
+          fi
+          
+          PAYLOAD=$(cat <<EOF
+          {
+            "attachments": [{
+              "color": "$COLOR",
+              "title": "Figma Token Sync $STATUS",
+              "text": "Design tokens have been synced to Figma",
+              "fields": [
+                {
+                  "title": "Repository",
+                  "value": "${{ github.repository }}",
+                  "short": true
+                },
+                {
+                  "title": "Triggered by",
+                  "value": "${{ github.actor }}",
+                  "short": true
+                }
+              ],
+              "footer": "GitHub Actions",
+              "ts": $(date +%s)
+            }]
+          }
+          EOF
+          )
+          
+          curl -X POST -H 'Content-type: application/json' \
+            --data "$PAYLOAD" \
+            "$SLACK_WEBHOOK_URL" || true

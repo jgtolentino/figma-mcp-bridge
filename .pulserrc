@@ -1,0 +1,34 @@
+{
+  "name": "figma-mcp-bridge",
+  "version": "1.0.0",
+  "description": "Figma Design System Bridge for Pulser",
+  "agents": [
+    {
+      "name": "FigmaBridge",
+      "path": "./figma-agent.yaml",
+      "enabled": true,
+      "endpoints": {
+        "base": "http://localhost:8000",
+        "healthcheck": "/",
+        "tokens": "/figma/design-tokens",
+        "push": "/figma/push",
+        "components": "/figma/components"
+      }
+    }
+  ],
+  "commands": {
+    "figma:server": "cd server && uvicorn main:app --reload",
+    "figma:pull": "python cli/figma_ds_sync.py pull",
+    "figma:push": "python cli/figma_ds_sync.py push",
+    "figma:validate": "python cli/figma_ds_sync.py validate",
+    "figma:init": "python cli/figma_ds_sync.py init"
+  },
+  "env": {
+    "required": ["FIGMA_PAT", "FIGMA_FILE_ID"],
+    "optional": ["FIGMA_API_BASE_URL"]
+  },
+  "dependencies": {
+    "python": ">=3.8",
+    "pip": ["fastapi", "uvicorn", "httpx", "typer", "rich", "python-dotenv"]
+  }
+}

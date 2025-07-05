@@ -1,0 +1,142 @@
+name: FigmaBridge
+version: "1.0.0"
+description: Bi-directional sync between Figma Dev Mode and design systems via MCP
+author: Jake A. (jgtolentino)
+
+capabilities:
+  - Fetch design tokens from Figma files
+  - Push local design tokens to Figma
+  - Convert Figma components to React code
+  - Validate token structure
+  - Merge token updates
+
+routes:
+  - method: GET
+    path: /figma/design-tokens
+    handler: fetch_design_tokens
+    description: Fetch all design tokens from configured Figma file
+    
+  - method: POST
+    path: /figma/push
+    handler: sync_design_tokens
+    description: Push local design tokens back to Figma
+    
+  - method: GET
+    path: /figma/components
+    handler: fetch_components
+    description: Fetch component definitions from Figma
+
+permissions:
+  - net:outbound     # Required for Figma API calls
+  - fs:project       # Required for reading/writing token files
+  - env:read         # Required for reading environment variables
+
+env:
+  FIGMA_PAT: 
+    required: true
+    description: Figma Personal Access Token for API authentication
+  FIGMA_FILE_ID:
+    required: true
+    description: Target Figma file ID for token sync
+
+memory_tags:
+  - design_system
+  - figma
+  - tokens
+  - components
+  - dev_mode
+
+config:
+  model: claude-3-5-sonnet
+  temperature: 0.2
+  max_tokens: 4000
+  
+system_prompt: |
+  You are FigmaBridge, an MCP agent that synchronizes design tokens between Figma and code repositories.
+  
+  Your primary responsibilities:
+  1. Facilitate bi-directional sync of design tokens
+  2. Validate token structure and format
+  3. Convert between Figma and standard token formats
+  4. Generate React components from Figma designs
+  
+  Always ensure:
+  - Token validation before any push operations
+  - Proper error handling and user feedback
+  - Preservation of existing tokens when merging
+  - Clear documentation of changes made
+
+tools:
+  - bash
+  - file_read
+  - file_write
+  - json_parse
+  - http_request
+
+integrations:
+  pulser:
+    enabled: true
+    commands:
+      - name: figma-pull
+        description: Pull design tokens from Figma
+        script: python cli/figma_ds_sync.py pull
+        
+      - name: figma-push
+        description: Push design tokens to Figma
+        script: python cli/figma_ds_sync.py push
+        
+      - name: figma-validate
+        description: Validate token file structure
+        script: python cli/figma_ds_sync.py validate
+
+  github_actions:
+    enabled: true
+    workflows:
+      - sync_tokens.yml
+
+examples:
+  - prompt: "Pull the latest design tokens from Figma"
+    response: |
+      I'll pull the latest design tokens from your Figma file.
+      
+      ```bash
+      python cli/figma_ds_sync.py pull --output tokens/latest.json
+      ```
+      
+       Successfully pulled tokens to tokens/latest.json
+      
+      Token Summary:
+      - colors: 24 tokens
+      - spacing: 8 tokens
+      - typography: 12 tokens
+      
+  - prompt: "Convert this Figma component to React code"
+    response: |
+      I'll convert the Figma component to a React component.
+      
+      ```typescript
+      import React from 'react';
+      
+      interface ButtonProps {
+        variant?: 'primary' | 'secondary';
+        size?: 'small' | 'medium' | 'large';
+        disabled?: boolean;
+        children: React.ReactNode;
+      }
+      
+      export const Button: React.FC<ButtonProps> = ({
+        variant = 'primary',
+        size = 'medium',
+        disabled = false,
+        children
+      }) => {
+        return (
+          <button
+            className={`btn btn-${variant} btn-${size}`}
+            disabled={disabled}
+          >
+            {children}
+          </button>
+        );
+      };
+      ```
