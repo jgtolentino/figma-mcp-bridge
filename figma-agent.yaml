@@ -7,8 +7,11 @@ capabilities:
   - Fetch design tokens from Figma files
   - Push local design tokens to Figma
   - Convert Figma components to React code
+  - Push React components to Figma
+  - Transform tokens between Figma and Style Dictionary formats
+  - Build tokens for multiple platforms (CSS, iOS, Android)
   - Validate token structure
-  - Merge token updates
+  - Merge token updates from multiple files
 
 routes:
   - method: GET

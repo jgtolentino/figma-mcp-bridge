@@ -21,7 +21,11 @@
     "figma:pull": "python cli/figma_ds_sync.py pull",
     "figma:push": "python cli/figma_ds_sync.py push",
     "figma:validate": "python cli/figma_ds_sync.py validate",
-    "figma:init": "python cli/figma_ds_sync.py init"
+    "figma:init": "python cli/figma_ds_sync.py init",
+    "figma:build": "python cli/figma_ds_sync.py build",
+    "figma:transform": "python cli/figma_ds_sync.py transform",
+    "figma:push-component": "python cli/figma_ds_sync.py push-component",
+    "figma:merge": "python cli/figma_ds_sync.py merge"
   },
   "env": {
     "required": ["FIGMA_PAT", "FIGMA_FILE_ID"],
