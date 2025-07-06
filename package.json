@@ -1,0 +1,94 @@
+{
+  "name": "figma-mcp-bridge",
+  "version": "1.0.0",
+  "description": "Bi-directional sync between Figma Dev Mode and design systems via MCP server and Claude agent",
+  "main": "server/main.py",
+  "type": "module",
+  "scripts": {
+    "start": "cd server && uvicorn main:app --reload",
+    "dev": "cd server && uvicorn main:app --reload --port 8000",
+    "build": "python cli/figma_ds_sync.py build",
+    "test": "pytest tests/",
+    "test:watch": "pytest-watch tests/",
+    "lint": "ruff check .",
+    "lint:fix": "ruff check --fix .",
+    "format": "black .",
+    "typecheck": "mypy server/ cli/",
+    "install:python": "pip install -r server/requirements.txt",
+    "install:node": "npm install style-dictionary",
+    "install:all": "npm run install:python && npm run install:node",
+    "figma:pull": "python cli/figma_ds_sync.py pull",
+    "figma:push": "python cli/figma_ds_sync.py push",
+    "figma:build": "python cli/figma_ds_sync.py build",
+    "figma:transform": "python cli/figma_ds_sync.py transform",
+    "figma:validate": "python cli/figma_ds_sync.py validate",
+    "figma:init": "python cli/figma_ds_sync.py init",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "precommit": "npm run lint && npm run typecheck && npm run test"
+  },
+  "keywords": [
+    "figma",
+    "design-tokens",
+    "mcp",
+    "claude",
+    "design-system",
+    "style-dictionary",
+    "react",
+    "typescript",
+    "automation"
+  ],
+  "author": "Jake A. Tolentino <jgtolentino@github.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jgtolentino/figma-mcp-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jgtolentino/figma-mcp-bridge/issues"
+  },
+  "homepage": "https://github.com/jgtolentino/figma-mcp-bridge#readme",
+  "engines": {
+    "node": ">=16.0.0",
+    "python": ">=3.8.0"
+  },
+  "devDependencies": {
+    "style-dictionary": "^4.0.1",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "style-dictionary": "^4.0.1"
+  },
+  "python": {
+    "dependencies": [
+      "fastapi>=0.109.0",
+      "uvicorn[standard]>=0.27.0",
+      "httpx>=0.26.0",
+      "python-dotenv>=1.0.0",
+      "pydantic>=2.5.3",
+      "typer>=0.9.0",
+      "rich>=13.7.0"
+    ],
+    "dev_dependencies": [
+      "pytest>=7.0.0",
+      "pytest-asyncio>=0.23.0",
+      "pytest-watch>=4.2.0",
+      "black>=23.0.0",
+      "ruff>=0.1.0",
+      "mypy>=1.0.0"
+    ]
+  },
+  "files": [
+    "server/",
+    "cli/",
+    "examples/",
+    "style-dictionary.config.js",
+    "figma-agent.yaml",
+    ".pulserrc",
+    "LICENSE",
+    "README.md"
+  ]
+}

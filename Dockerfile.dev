@@ -1,0 +1,61 @@
+# Development-specific Dockerfile with additional tools
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Install system dependencies including Node.js
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    vim \
+    htop \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY server/requirements.txt /app/server/requirements.txt
+RUN pip install -r server/requirements.txt
+
+# Install development dependencies
+RUN pip install \
+    pytest>=7.0.0 \
+    pytest-asyncio>=0.23.0 \
+    pytest-watch>=4.2.0 \
+    black>=23.0.0 \
+    ruff>=0.1.0 \
+    mypy>=1.0.0 \
+    ipython \
+    jupyter
+
+# Install Node.js dependencies
+RUN npm install -g \
+    style-dictionary \
+    @types/node \
+    typescript
+
+# Install useful development tools
+RUN pip install \
+    httpx[cli] \
+    python-dotenv \
+    rich
+
+# Copy package.json and install Node dependencies
+COPY package.json /app/
+RUN npm install
+
+# Create development user
+RUN useradd -m -s /bin/bash dev
+RUN chown -R dev:dev /app
+
+# Switch to development user
+USER dev
+
+# Default command (keep container running)
+CMD ["tail", "-f", "/dev/null"]
